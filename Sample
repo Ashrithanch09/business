@@ -1,0 +1,64 @@
+// Import required modules
+const express = require('express');
+const mysql = require('mysql');
+const fs = require('fs');
+
+// Create an Express application
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Create MySQL connection
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'Ashritha',
+  password: '12345',
+  database: 'financial_data_db'
+});
+
+// Connect to MySQL
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to MySQL: ', err);
+    return;
+  }
+  console.log('Connected to MySQL');
+});
+
+// Define function to import data from CSV file to MySQL
+function importData() {
+  const filePath = 'E:/CS/cerificates/sample.csv'; 
+  const query = `
+    LOAD DATA INFILE '${filePath}'
+    INTO TABLE financial_data
+    FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+    LINES TERMINATED BY '\\n'
+    IGNORE 1 ROWS;`;
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error importing data from CSV: ', err);
+    } else {
+      console.log('Data imported successfully');
+    }
+  });
+}
+
+// Import data from CSV file
+importData();
+
+
+app.get('/api/data', (req, res) => {
+  connection.query('SELECT * FROM financial_data', (err, results) => {
+    if (err) {
+      console.error('Error querying MySQL: ', err);
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// Start the Express server
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
